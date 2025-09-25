@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Мебельный магазин</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>МебельДом</h1>
+    <p>Интернет-магазин мебели с умным консультантом</p>
+  </header>
+
+  <main>
+    <section class="catalog">
+      <h2>Каталог</h2>
+      <div class="items">
+        <div class="item">
+          <img src="{{ url_for('static', filename='images/диван.jpg') }}" alt="Диван">
+          <h3>Диван "Комфорт"</h3>
+          <p>Цена: 25 000 ₽</p>
+          <button onclick="askBot('Расскажи подробнее про диван Комфорт')">Спросить консультанта</button>
+        </div>
+        <div class="item">
+          <img src="{{ url_for('static', filename='images/стол.jpg') }}" alt="Стол">
+          <h3>Обеденный стол "Классик"</h3>
+          <p>Цена: 15 000 ₽</p>
+          <button onclick="askBot('Подойдет ли стол Классик для маленькой кухни?')">Спросить консультанта</button>
+        </div>
+        <div class="item">
+          <img src="{{ url_for('static', filename='images/кресло.jpg') }}" alt="Кресло">
+          <h3>Кресло "Релакс"</h3>
+          <p>Цена: 12 000 ₽</p>
+          <button onclick="askBot('Какие преимущества у кресла Релакс?')">Спросить консультанта</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="chat">
+      <h2>Онлайн-консультант</h2>
+      <div class="chat-container">
+        <div class="messages" id="messages"></div>
+        <div class="input-box">
+          <input type="text" id="input" placeholder="Задайте вопрос о мебели...">
+          <button onclick="sendMessage()">Отправить</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    async function sendMessage() {
+      let inputElem = document.getElementById("input");
+      let msg = inputElem.value;
+      if (!msg) return;
+
+      addMessage("user", msg);
+      inputElem.value = "";
+
+      let response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      });
+      let data = await response.json();
+
+      addMessage("bot", data.reply);
+    }
+
+    function addMessage(role, text) {
+      let messagesElem = document.getElementById("messages");
+      messagesElem.innerHTML += `<div class="message ${role}">${text}</div>`;
+      messagesElem.scrollTop = messagesElem.scrollHeight;
+    }
+
+    function askBot(text) {
+      addMessage("user", text);
+      fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text })
+      })
+      .then(res => res.json())
+      .then(data => addMessage("bot", data.reply));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const inputElem = document.getElementById("input");
+      inputElem.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
